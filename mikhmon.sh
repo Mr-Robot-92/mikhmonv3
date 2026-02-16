@@ -1,31 +1,26 @@
 #!/bin/bash
 
-set -e  # Arrête le script en cas d'erreur
+set -e
 
-# Déterminer le dossier d'installation
-if [[ "$HOME" == *"/com.termux/"* ]]; then
-    INSTALL_DIR="$HOME/mikhmonv3"
-else
-    INSTALL_DIR="$HOME/mikhmonv3"
-fi
+INSTALL_DIR="$HOME/mikhmonv3"
 
 echo "--- Lancement de Mikhmon v3 ---"
 
-# Vérifier que le dossier existe
+# ====== Vérifier dossier ======
 if [[ ! -d "$INSTALL_DIR" ]]; then
     echo "Erreur : Le dossier $INSTALL_DIR n'existe pas."
     exit 1
 fi
 
-cd "$INSTALL_DIR" || exit 1
+cd "$INSTALL_DIR"
 
-# Vérifier que PHP est installé
+# ====== Vérifier PHP ======
 if ! command -v php &> /dev/null; then
     echo "Erreur : PHP n'est pas installé."
     exit 1
 fi
 
-# Vérifier si le port 8080 est déjà utilisé
+# ====== Port ======
 if command -v lsof &> /dev/null && lsof -Pi :8080 -sTCP:LISTEN -t >/dev/null 2>&1; then
     echo "Avertissement : Le port 8080 est déjà utilisé."
     read -p "Voulez-vous utiliser un autre port ? (y/n) " -n 1 -r
@@ -39,9 +34,27 @@ else
     PORT=8080
 fi
 
-echo "Démarrage du serveur PHP sur http://127.0.0.1:$PORT"
+URL="http://127.0.0.1:$PORT"
+
+echo "Démarrage du serveur PHP sur $URL"
 echo "Appuyez sur Ctrl+C pour arrêter le serveur"
 echo "----------------------------------------"
 
-# Lancer le serveur PHP
+# ====== OUVERTURE NAVIGATEUR ======
+(
+sleep 2
+
+if command -v termux-open-url &> /dev/null; then
+    termux-open-url "$URL"
+
+elif command -v xdg-open &> /dev/null; then
+    xdg-open "$URL" > /dev/null 2>&1
+
+else
+    echo "Impossible d'ouvrir automatiquement le navigateur."
+fi
+
+) &
+
+# ====== Lancer serveur ======
 php -S 127.0.0.1:$PORT

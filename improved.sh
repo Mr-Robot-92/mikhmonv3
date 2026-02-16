@@ -9,12 +9,14 @@ Y='\033[1;33m'
 C='\033[1;36m'
 W='\033[0m'
 B='\033[1;34m'
+M='\033[1;35m'
 
-# ====== FONCTION ANIMATION LOADING ======
+# ====== ANIMATIONS AVANCÉES ======
+
 loading_spinner() {
     local pid=$1
     local delay=0.1
-    local spinstr='|/-\'
+    local spinstr='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
     echo -n " "
     while [ "$(ps a | awk '{print $1}' | grep $pid)" ]; do
         local temp=${spinstr#?}
@@ -26,29 +28,59 @@ loading_spinner() {
     printf "    \b\b\b\b"
 }
 
-loading_dots() {
+progress_bar() {
     local message=$1
-    local duration=$2
-    echo -n -e "${C}${message}${W}"
-    for i in $(seq 1 $duration); do
-        echo -n "."
-        sleep 0.3
+    local total=30
+    echo -n -e "${C}${message}${W} ["
+    for i in $(seq 1 $total); do
+        if [ $i -lt 10 ]; then
+            echo -n -e "${R}▓${W}"
+        elif [ $i -lt 20 ]; then
+            echo -n -e "${Y}▓${W}"
+        else
+            echo -n -e "${G}▓${W}"
+        fi
+        sleep 0.05
+    done
+    echo -e "] ${G}✓${W}"
+}
+
+matrix_loading() {
+    local message=$1
+    local chars="01"
+    echo -n -e "${G}${message}${W} "
+    for i in $(seq 1 25); do
+        echo -n "${chars:RANDOM%${#chars}:1}"
+        sleep 0.04
     done
     echo -e " ${G}✓${W}"
 }
 
-progress_bar() {
-    local duration=$1
-    local message=$2
-    echo -n -e "${C}${message} ${W}"
-    for i in $(seq 1 20); do
-        echo -n "█"
-        sleep $(echo "scale=2; $duration/20" | bc)
+pulse_effect() {
+    for i in {1..3}; do
+        echo -n -e "${M}●${W}"
+        sleep 0.15
+        printf "\b \b"
+        echo -n -e "${M}◉${W}"
+        sleep 0.15
+        printf "\b \b"
+        echo -n -e "${M}◎${W}"
+        sleep 0.15
+        printf "\b \b"
     done
-    echo -e " ${G}100%${W}"
 }
 
-# ====== BANNIERE ======
+typing_effect() {
+    local text=$1
+    local color=$2
+    for (( i=0; i<${#text}; i++ )); do
+        echo -n -e "${color}${text:$i:1}${W}"
+        sleep 0.03
+    done
+    echo ""
+}
+
+# ====== BANNIERE ANIMÉE ======
 echo -e "${R}"
 cat << "EOF"
 ███╗   ███╗██╗██╗  ██╗██╗  ██╗███╗   ███╗ ██████╗ ███╗   ██╗
@@ -57,11 +89,13 @@ cat << "EOF"
 ██║╚██╔╝██║██║██╔═██╗ ██╔══██║██║╚██╔╝██║██║   ██║██║╚██╗██║
 ██║ ╚═╝ ██║██║██║  ██╗██║  ██║██║ ╚═╝ ██║╚██████╔╝██║ ╚████║
 ╚═╝     ╚═╝╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
-
-        M I K H M O N   V 3   I N S T A L L E R
-        modded by Mr-Robot
 EOF
 echo -e "${W}"
+
+typing_effect "        M I K H M O N   V 3   I N S T A L L E R" "${C}"
+typing_effect "                  modded by Mr-Robot" "${Y}"
+
+sleep 0.5
 
 # ====== SIGNATURE ======
 echo -e "${R}"
@@ -74,27 +108,45 @@ cat << "EOF"
 EOF
 echo -e "${W}"
 
-loading_dots "[*] Initialisation du système" 3
+echo -n -e "${C}[*] Initialisation du système${W} "
+pulse_effect
+echo -e "${G}✓${W}"
 
-# ====== MENU ======
+sleep 0.5
+
+# ====== MENU STYLISÉ ======
 echo ""
-echo -e "${Y}╔════════════════════════════╗${W}"
-echo -e "${Y}║   MENU D'INSTALLATION      ║${W}"
-echo -e "${Y}╚════════════════════════════╝${W}"
-echo -e "${G}1) Installer Mikhmon V3${W}"
-echo -e "${R}2) Quitter${W}"
+echo -e "${Y}╔════════════════════════════════════╗${W}"
+echo -e "${Y}║      MENU D'INSTALLATION           ║${W}"
+echo -e "${Y}╠════════════════════════════════════╣${W}"
+echo -e "${Y}║                                    ║${W}"
+echo -e "${Y}║  ${G}1)${W} Installer Mikhmon V3          ${Y}║${W}"
+echo -e "${Y}║  ${R}2)${W} Quitter                       ${Y}║${W}"
+echo -e "${Y}║                                    ║${W}"
+echo -e "${Y}╚════════════════════════════════════╝${W}"
 echo ""
 
-read -p ">>> " choix
+read -p "$(echo -e ${C}[${G}✓${C}]${W}) Votre choix >>> " choix
 
 if [ "$choix" != "1" ]; then
-    echo -e "${R}[✗] Annulé.${W}"
+    echo ""
+    matrix_loading "[*] Fermeture du programme"
+    echo -e "${R}[✗] Installation annulée.${W}"
     exit
 fi
 
 # ====== DETECTION SYSTEME ======
 echo ""
-loading_dots "[*] Analyse de l'environnement" 2
+echo -e "${B}╔════════════════════════════════════╗${W}"
+echo -e "${B}║  ANALYSE DE L'ENVIRONNEMENT       ║${W}"
+echo -e "${B}╚════════════════════════════════════╝${W}"
+
+sleep 0.5
+
+echo -n -e "${C}[*] Détection du système${W}"
+sleep 1 &
+loading_spinner $!
+echo -e " ${G}✓${W}"
 
 if [ -d "/data/data/com.termux" ]; then
     SYS="TERMUX"
@@ -102,33 +154,39 @@ else
     SYS="LINUX"
 fi
 
-echo -e "${G}[✓] Système détecté : $SYS${W}"
+echo -e "${G}[✓] Système identifié : ${Y}$SYS${W}"
 sleep 1
 
 # ====== INSTALL DEPENDANCES ======
 echo ""
-echo -e "${C}[+] Installation des dépendances...${W}"
-progress_bar 2 "[*] Téléchargement des paquets"
+echo -e "${B}╔════════════════════════════════════╗${W}"
+echo -e "${B}║  INSTALLATION DES DÉPENDANCES     ║${W}"
+echo -e "${B}╚════════════════════════════════════╝${W}"
+echo ""
 
 if [ "$SYS" = "TERMUX" ]; then
+    echo -e "${C}[*] Mise à jour des paquets...${W}"
     pkg update -y > /dev/null 2>&1 &
     loading_spinner $!
     echo -e "${G}[✓] Mise à jour terminée${W}"
+    echo ""
     
-    pkg install php curl unzip git -y > /dev/null 2>&1 &
-    loading_spinner $!
-    echo -e "${G}[✓] Dépendances installées${W}"
+    progress_bar "[*] Installation PHP, Curl, Git"
+    pkg install php curl unzip git -y > /dev/null 2>&1
+    echo -e "${G}[✓] Dépendances installées avec succès${W}"
     
     INSTALL_DIR="$HOME"
     BIN_DIR="$PREFIX/bin"
 else
+    echo -e "${C}[*] Mise à jour des paquets...${W}"
     sudo apt update -y > /dev/null 2>&1 &
     loading_spinner $!
     echo -e "${G}[✓] Mise à jour terminée${W}"
+    echo ""
     
-    sudo apt install php curl unzip git -y > /dev/null 2>&1 &
-    loading_spinner $!
-    echo -e "${G}[✓] Dépendances installées${W}"
+    progress_bar "[*] Installation PHP, Curl, Git"
+    sudo apt install php curl unzip git -y > /dev/null 2>&1
+    echo -e "${G}[✓] Dépendances installées avec succès${W}"
     
     INSTALL_DIR="$HOME"
     BIN_DIR="/usr/local/bin"
@@ -136,17 +194,27 @@ fi
 
 # ====== TELECHARGEMENT ======
 echo ""
-echo -e "${C}[+] Téléchargement de Mikhmon V3...${W}"
+echo -e "${B}╔════════════════════════════════════╗${W}"
+echo -e "${B}║  TÉLÉCHARGEMENT DE MIKHMON V3     ║${W}"
+echo -e "${B}╚════════════════════════════════════╝${W}"
+echo ""
+
 cd "$INSTALL_DIR"
 rm -rf mikhmonv3 > /dev/null 2>&1
 
+echo -e "${C}[*] Clonage du repository GitHub...${W}"
 git clone https://github.com/Mr-Robot-92/mikhmonv3.git > /dev/null 2>&1 &
 loading_spinner $!
-echo -e "${G}[✓] Téléchargement terminé${W}"
+echo -e "${G}[✓] Téléchargement réussi${W}"
 
-# ====== CONFIG ======
+# ====== CONFIGURATION ======
 echo ""
-loading_dots "[*] Configuration de l'application" 3
+echo -e "${B}╔════════════════════════════════════╗${W}"
+echo -e "${B}║  CONFIGURATION DE L'APPLICATION   ║${W}"
+echo -e "${B}╚════════════════════════════════════╝${W}"
+echo ""
+
+matrix_loading "[*] Configuration des permissions"
 
 chmod +x "$INSTALL_DIR/mikhmonv3/mikhmon.sh"
 
@@ -159,56 +227,80 @@ fi
 echo -e "${G}[✓] Configuration terminée${W}"
 sleep 1
 
-# ====== FIN ======
+# ====== CONNEXION SIMULÉE ======
 echo ""
-echo -e "${G}╔════════════════════════════════════╗${W}"
-echo -e "${G}║  ✓ INSTALLATION TERMINÉE !        ║${W}"
-echo -e "${G}╚════════════════════════════════════╝${W}"
-echo ""
-echo -e "${B}[i] Commande pour lancer : ${G}mikhmon${W}"
+echo -e "${M}╔════════════════════════════════════╗${W}"
+echo -e "${M}║  CONNEXION AU SYSTÈME             ║${W}"
+echo -e "${M}╚════════════════════════════════════╝${W}"
 echo ""
 
-# ====== ANIMATIONS FINALES ======
-loading_dots "${R}[*] Connexion au système" 2
-echo -e "${G}[✓] Accès autorisé${W}"
+matrix_loading "[*] Authentification"
+sleep 0.5
+matrix_loading "[*] Vérification des accès"
+sleep 0.5
+echo -e "${G}[✓] Accès accordé - Bienvenue Mr Robot${W}"
 sleep 1
 
-# ====== OUVERTURE YOUTUBE ======
+# ====== SUCCESS SCREEN ======
+clear
+echo -e "${G}"
+cat << "EOF"
+    ╔═══════════════════════════════════════╗
+    ║                                       ║
+    ║         ✓  INSTALLATION               ║
+    ║            TERMINÉE !                 ║
+    ║                                       ║
+    ╚═══════════════════════════════════════╝
+EOF
+echo -e "${W}"
+
+echo -e "${B}[i] Commande d'accès : ${G}mikhmon${W}"
 echo ""
+
+# ====== OUVERTURE YOUTUBE ANIMÉE ======
 echo -e "${Y}╔════════════════════════════════════╗${W}"
-echo -e "${Y}║   SOUTENEZ LE PROJET !            ║${W}"
+echo -e "${Y}║   SOUTENEZ LE PROJET ! 🔔         ║${W}"
 echo -e "${Y}╚════════════════════════════════════╝${W}"
 echo ""
-loading_dots "${C}[*] Ouverture de la chaîne YouTube" 2
 
-# Remplace cette URL par l'URL de ta chaîne YouTube
-YOUTUBE_URL="https://youtu.be/G4yCXoH13TY?si=RwatDwVkN9zQaSl_"
+# ⚠️ CHANGE CETTE URL PAR TON LIEN YOUTUBE ⚠️
+YOUTUBE_URL="https://youtube.com/@ton_nom_de_chaine"
+
+matrix_loading "[*] Ouverture de la chaîne YouTube"
 
 if [ "$SYS" = "TERMUX" ]; then
-    termux-open-url "$YOUTUBE_URL" 2>/dev/null || {
-        echo -e "${Y}[!] Impossible d'ouvrir automatiquement${W}"
-        echo -e "${C}[i] Visite manuellement : $YOUTUBE_URL${W}"
-    }
+    if termux-open-url "$YOUTUBE_URL" 2>/dev/null; then
+        echo -e "${G}[✓] Chaîne YouTube ouverte${W}"
+    else
+        echo -e "${Y}[!] Ouverture manuelle requise${W}"
+        echo -e "${C}[i] Lien : $YOUTUBE_URL${W}"
+    fi
 else
     if command -v xdg-open > /dev/null; then
         xdg-open "$YOUTUBE_URL" 2>/dev/null &
+        echo -e "${G}[✓] Chaîne YouTube ouverte${W}"
     elif command -v open > /dev/null; then
         open "$YOUTUBE_URL" 2>/dev/null &
+        echo -e "${G}[✓] Chaîne YouTube ouverte${W}"
     else
-        echo -e "${Y}[!] Impossible d'ouvrir automatiquement${W}"
-        echo -e "${C}[i] Visite manuellement : $YOUTUBE_URL${W}"
+        echo -e "${Y}[!] Ouverture manuelle requise${W}"
+        echo -e "${C}[i] Lien : $YOUTUBE_URL${W}"
     fi
 fi
 
 sleep 1
-echo -e "${G}[✓] N'oublie pas de t'abonner ! 🔔${W}"
+
+echo ""
+echo -e "${R}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${W}"
+echo -e "${R}  👤 Créé par : Mr Robot${W}"
+echo -e "${R}  🏴 Groupe   : Fsociety${W}"
+echo -e "${R}  📧 Contact  : lafsociety2@gmail.com${W}"
+echo -e "${R}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${W}"
+echo ""
+echo -e "${Y}💡 Astuce : Lance l'application avec ${G}mikhmon${W}"
 echo ""
 
-# ====== SIGNATURE FINALE ======
-echo -e "${R}╔════════════════════════════════════╗${W}"
-echo -e "${R}║      -- Mr Robot | Fsociety --    ║${W}"
-echo -e "${R}║      lafsociety2@gmail.com        ║${W}"
-echo -e "${R}╚════════════════════════════════════╝${W}"
-echo ""
-echo -e "${Y}Lancez maintenant : ${G}mikhmon${W}"
+# Animation finale
+echo -n -e "${C}Merci d'avoir installé Mikhmon V3 ! ${W}"
+pulse_effect
 echo ""

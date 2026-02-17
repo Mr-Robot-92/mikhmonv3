@@ -14,20 +14,9 @@ CYAN='\033[1;36m'
 YELLOW='\033[1;33m'
 RESET='\033[0m'
 
-# ===== FONCTION CHECK PORT =====
-is_online() {
-    if command -v lsof >/dev/null 2>&1; then
-        lsof -Pi :$PORT -sTCP:LISTEN -t >/dev/null 2>&1
-    elif command -v ss >/dev/null 2>&1; then
-        ss -ltn | grep -q ":$PORT"
-    else
-        netstat -tln 2>/dev/null | grep -q ":$PORT"
-    fi
-}
-
 # ===== LOGO =====
 logo() {
-
+clear
 echo -e "${CYAN}"
 cat << "EOF"
 ███╗   ███╗██╗██╗  ██╗██╗  ██╗███╗   ███╗ ██████╗ ███╗   ██╗
@@ -36,21 +25,42 @@ cat << "EOF"
 ██║╚██╔╝██║██║██╔═██╗ ██╔══██║██║╚██╔╝██║██║   ██║██║╚██╗██║
 ██║ ╚═╝ ██║██║██║  ██╗██║  ██║██║ ╚═╝ ██║╚██████╔╝██║ ╚████║
 ╚═╝     ╚═╝╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
-        F S O C I E T Y   C O N T R O L
+
         M I K H M O N   v3
+   MikroTik Hotspot Management Tool
 EOF
 echo -e "${RESET}"
-
-echo -e "${YELLOW}       Mikhmon v3 Control Script${RESET}"
+echo -e "${YELLOW}      Mikhmon v3 Control Script${RESET}"
 echo -e "${RED}        modded by Mr Robot — Fsociety${RESET}"
 echo ""
+}
+
+# ===== CHECK SERVER =====
+is_running() {
+
+# Vérifier PID
+if [[ -f "$PID_FILE" ]]; then
+    PID=$(cat "$PID_FILE")
+    if kill -0 "$PID" 2>/dev/null; then
+        return 0
+    else
+        rm -f "$PID_FILE"
+    fi
+fi
+
+# Vérifier process PHP (Termux safe)
+if pgrep -f "php -S 127.0.0.1:$PORT" >/dev/null; then
+    return 0
+fi
+
+return 1
 }
 
 # ===== START =====
 start() {
 
-clear
 logo
+echo -e "${CYAN}--- Lancement de Mikhmon v3 ---${RESET}"
 
 if [[ ! -d "$INSTALL_DIR" ]]; then
     echo "Erreur : dossier introuvable"
@@ -62,11 +72,14 @@ if ! command -v php &> /dev/null; then
     exit 1
 fi
 
-if is_online; then
+if is_running; then
     echo -e "${GREEN}[ ONLINE ] Serveur déjà actif${RESET}"
     echo -e "URL : ${CYAN}$URL${RESET}"
     exit 0
 fi
+
+# Nettoyer anciens process fantômes
+pkill -f "php -S 127.0.0.1:$PORT" 2>/dev/null || true
 
 cd "$INSTALL_DIR"
 
@@ -92,11 +105,19 @@ stop() {
 
 logo
 
-if is_online; then
-    PID=$(lsof -t -i:$PORT 2>/dev/null || true)
-    kill $PID 2>/dev/null || true
-    rm -f "$PID_FILE"
+if is_running; then
+
+    # Tuer via PID si existe
+    if [[ -f "$PID_FILE" ]]; then
+        kill "$(cat "$PID_FILE")" 2>/dev/null || true
+        rm -f "$PID_FILE"
+    fi
+
+    # Tuer process PHP
+    pkill -f "php -S 127.0.0.1:$PORT" 2>/dev/null || true
+
     echo -e "${RED}[ OFFLINE ] Serveur arrêté${RESET}"
+
 else
     echo -e "${RED}[ OFFLINE ] Aucun serveur actif${RESET}"
 fi
@@ -107,7 +128,7 @@ status() {
 
 logo
 
-if is_online; then
+if is_running; then
     echo -e "${GREEN}[ ONLINE ] Serveur actif${RESET}"
     echo -e "URL : ${CYAN}$URL${RESET}"
 else
@@ -119,31 +140,11 @@ fi
 restart() {
 
 logo
-
 echo -e "${YELLOW}[ RESTART ] Redémarrage...${RESET}"
 
-if is_online; then
-    PID=$(lsof -t -i:$PORT 2>/dev/null || true)
-    kill $PID 2>/dev/null || true
-fi
-
+stop
 sleep 1
-
-cd "$INSTALL_DIR"
-php -S 127.0.0.1:$PORT >/dev/null 2>&1 &
-
-echo $! > "$PID_FILE"
-
-sleep 1
-
-echo -e "${GREEN}[ ONLINE ] Serveur redémarré${RESET}"
-echo -e "URL : ${CYAN}$URL${RESET}"
-
-if command -v termux-open-url &> /dev/null; then
-    termux-open-url "$URL"
-elif command -v xdg-open &> /dev/null; then
-    xdg-open "$URL" >/dev/null 2>&1
-fi
+start
 }
 
 # ===== COMMANDES =====

@@ -124,17 +124,6 @@ echo -e "${C}Ouverture de l'interface...${W}"
 if [ "$SYS" = "TERMUX" ]; then
     termux-open-url "$URL"
 
-    sleep 5   # attendre que Mikhmon soit chargé
-
-SECRET_URL="https://ton-lien.com"
-
-echo -e "${C}Chargement des modules additionnels...${W}"
-
-if [ "$SYS" = "TERMUX" ]; then
-    termux-open-url "https://www.effectivegatecpm.com/hqhwm8tqfv?key=13dbc9a1e10ab8ad44f330d03501fb53" > /dev/null 2>&1 &
-else
-    xdg-open "$SECRET_URL" > /dev/null 2>&1 &
-fi
 else
     xdg-open "$URL" > /dev/null 2>&1
 fi
@@ -146,7 +135,7 @@ sleep 1
 echo -e "${C}Abonnez-vous pour plus d’outils exclusifs.${W}"
 sleep 2
 
-YT="https://youtube.com/@TON_LIEN"
+YT="https://www.youtube.com/@Mr-Robot92"
 
 echo -e "${Y}Ouverture de la chaîne YouTube...${W}"
 

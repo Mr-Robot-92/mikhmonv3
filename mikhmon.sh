@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
-
 INSTALL_DIR="$HOME/mikhmonv3"
-PID_FILE="$INSTALL_DIR/server.pid"
 PORT=8080
 URL="http://127.0.0.1:$PORT"
 
@@ -11,85 +8,108 @@ URL="http://127.0.0.1:$PORT"
 RED='\033[1;31m'
 GREEN='\033[1;32m'
 CYAN='\033[1;36m'
+YELLOW='\033[1;33m'
 RESET='\033[0m'
 
-case "$1" in
+# ===== BANNIERE =====
+banner() {
+clear
+echo -e "${RED}"
+cat << "EOF"
+███╗   ███╗██╗██╗  ██╗██╗  ██╗███╗   ███╗ ██████╗ ███╗   ██╗
+████╗ ████║██║██║ ██╔╝██║  ██║████╗ ████║██╔═══██╗████╗  ██║
+██╔████╔██║██║█████╔╝ ███████║██╔████╔██║██║   ██║██╔██╗ ██║
+██║╚██╔╝██║██║██╔═██╗ ██╔══██║██║╚██╔╝██║██║   ██║██║╚██╗██║
+██║ ╚═╝ ██║██║██║  ██╗██║  ██║██║ ╚═╝ ██║╚██████╔╝██║ ╚████║
+╚═╝     ╚═╝╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
 
-start)
+        F S O C I E T Y   C O N T R O L
+EOF
+echo -e "${RESET}"
+echo -e "${CYAN}by Mr Robot${RESET}"
+echo ""
+}
 
-echo -e "${CYAN}--- Lancement de Mikhmon v3 ---${RESET}"
+# ===== STATUS =====
+status_check() {
+if command -v lsof &> /dev/null && lsof -Pi :$PORT -sTCP:LISTEN -t >/dev/null 2>&1; then
+    echo -e "${GREEN}● ONLINE${RESET}"
+else
+    echo -e "${RED}● OFFLINE${RESET}"
+fi
+}
 
-if [[ ! -d "$INSTALL_DIR" ]]; then
-    echo "Erreur : dossier introuvable"
-    exit 1
+# ===== START =====
+start_server() {
+
+if lsof -Pi :$PORT -sTCP:LISTEN -t >/dev/null 2>&1; then
+    echo -e "${YELLOW}Serveur déjà actif${RESET}"
+    return
 fi
 
-cd "$INSTALL_DIR"
-
-if ! command -v php &> /dev/null; then
-    echo "Erreur : PHP non installé"
-    exit 1
-fi
-
-if [[ -f "$PID_FILE" ]] && kill -0 $(cat "$PID_FILE") 2>/dev/null; then
-    echo -e "${GREEN}Serveur déjà actif.${RESET}"
-    exit 0
-fi
+cd "$INSTALL_DIR" || exit
 
 php -S 127.0.0.1:$PORT >/dev/null 2>&1 &
 
-echo $! > "$PID_FILE"
+sleep 1
 
-echo -e "${GREEN}[ ONLINE ] Serveur lancé${RESET}"
-echo "URL : $URL"
-
-sleep 2
+echo -e "${GREEN}[✓] Serveur lancé${RESET}"
+echo -e "URL → ${CYAN}$URL${RESET}"
 
 if command -v termux-open-url &> /dev/null; then
     termux-open-url "$URL"
 elif command -v xdg-open &> /dev/null; then
     xdg-open "$URL" >/dev/null 2>&1
 fi
+}
 
-;;
+# ===== STOP =====
+stop_server() {
 
-stop)
+PID=$(lsof -t -i:$PORT)
 
-if [[ -f "$PID_FILE" ]]; then
-    PID=$(cat "$PID_FILE")
-
-    if kill -0 $PID 2>/dev/null; then
-        kill $PID
-        rm "$PID_FILE"
-        echo -e "${RED}[ OFFLINE ] Serveur arrêté${RESET}"
-    else
-        echo "Serveur déjà arrêté"
-        rm "$PID_FILE"
-    fi
+if [[ -n "$PID" ]]; then
+    kill $PID
+    echo -e "${RED}[✗] Serveur arrêté${RESET}"
 else
-    echo "Aucun serveur en cours"
+    echo "Serveur déjà arrêté"
 fi
+}
 
-;;
+# ===== MENU =====
+menu() {
+while true; do
+    banner
 
-status)
+    echo -n "Status : "
+    status_check
+    echo ""
 
-if [[ -f "$PID_FILE" ]] && kill -0 $(cat "$PID_FILE") 2>/dev/null; then
-    echo -e "${GREEN}[ ONLINE ] Serveur actif${RESET}"
-    echo "URL : $URL"
-else
-    echo -e "${RED}[ OFFLINE ] Serveur arrêté${RESET}"
-fi
+    echo -e "${CYAN}1) Démarrer serveur${RESET}"
+    echo -e "${CYAN}2) Arrêter serveur${RESET}"
+    echo -e "${CYAN}3) Status${RESET}"
+    echo -e "${CYAN}4) Ouvrir interface${RESET}"
+    echo -e "${RED}0) Quitter${RESET}"
+    echo ""
 
-;;
+    read -p "fsociety@control >> " choix
 
-*)
+    case $choix in
 
-echo "Usage :"
-echo "  mikhmon start"
-echo "  mikhmon stop"
-echo "  mikhmon status"
+        1) start_server ;;
+        2) stop_server ;;
+        3) echo ""; status_check; sleep 2 ;;
+        4)
+            if command -v termux-open-url &> /dev/null; then
+                termux-open-url "$URL"
+            elif command -v xdg-open &> /dev/null; then
+                xdg-open "$URL" >/dev/null 2>&1
+            fi
+            ;;
+        0) exit ;;
+        *) echo "Option invalide"; sleep 1 ;;
+    esac
+done
+}
 
-;;
-
-esac
+menu

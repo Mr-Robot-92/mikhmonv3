@@ -27,9 +27,9 @@ MIKHMON V3 is a simple tool designed to make launching and managing the Mikhmon 
 
 ```bash
 # Clone the repository
-git clone https://github.com/Mr-Robot-92/mikhmonv3.git
+git clone https://github.com/Mr-Robot-92/mikhmonv3-ultimate.git
 
-cd mikhmonv3
+cd mikhmonv3-ultimate.git
 
 # Run the installer
 bash install.sh

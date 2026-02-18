@@ -28,11 +28,12 @@ MIKHMON V3 is a simple tool designed to make launching and managing the Mikhmon 
 ```bash
 # Clone the repository
 git clone https://github.com/Mr-Robot-92/mikhmonv3.git
+
 cd mikhmonv3
 
 # Run the installer
 bash install.sh
-bash install.sh
+
 ```
 ## Usage
 
